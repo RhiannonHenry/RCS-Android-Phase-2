@@ -18,6 +18,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicHeader;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
@@ -289,6 +290,8 @@ public class MainActivity extends Activity implements Runnable {
 			makeRequest=(now-lastRequestTime)>=MAIN_LOOP_DELAY; // Throttle so that do not drive through too many requests 
 			
 			final String notificationsUrl=SplashActivity.notificationChannelURL!=null?(SplashActivity.notificationChannelURL.replaceAll("tel\\:\\+", "tel%3A%2B").replaceAll("tel\\:", "tel%3A")):null;
+			Log.i("MainActivity", "NotificationsURL = "+notificationsUrl);
+			Log.i("MainActivity", "Make Request = "+makeRequest);
 			
 			if (notificationsUrl!=null && makeRequest ) {
 			
@@ -297,14 +300,19 @@ public class MainActivity extends Activity implements Runnable {
 				HttpParams myParams = new BasicHttpParams();
 			    HttpConnectionParams.setConnectionTimeout(myParams, MAIN_LOOP_DELAY); 
 			    HttpConnectionParams.setSoTimeout(myParams, LONGPOLL_TIMEOUT);
-			    
+			    Log.i("MainActivity","Sending HTTP Post to Notifications URL");
 			    HttpPost httppost = new HttpPost(notificationsUrl);
 			    
 				lastRequestTime=now;
 				
 				HttpResponse response=null;
 				try {
+					String auth = android.util.Base64.encodeToString((SplashActivity.appCredentialUsername+":"+SplashActivity.appCredentialPassword).getBytes("UTF-8"), android.util.Base64.NO_WRAP);
+					httppost.addHeader("Authorization", "Basic "+ auth);
+					httppost.addHeader("Content-Type", "application/json");
+					httppost.addHeader("accept", "application/json");
 					response = client.execute(httppost);
+					Log.i("MainActivity","Response = "+response);
 				} catch (java.net.SocketTimeoutException ste) {
 					Log.d("MainActivity", "SocketTimeout handled");
 				} catch (ClientProtocolException e) {
@@ -336,6 +344,7 @@ public class MainActivity extends Activity implements Runnable {
 				}
 				
 			} else {
+				Log.e("MainActivity","Notifications URL is null OR makeRequest is false");
 	    		try {
 	    			Thread.yield();
 	    			Thread.sleep (1000); // milliseconds

@@ -17,6 +17,7 @@ import org.json.JSONTokener;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.util.Log;
 
 import com.loopj.android.http.AsyncHttpResponseHandler;
 
@@ -67,8 +68,9 @@ public class RCSJsonHttpResponseHandler extends AsyncHttpResponseHandler {
      * Fired when a request returns successfully, override to handle in your own code
      * @param content the body of the HTTP response from the server
      * @throws UnsupportedEncodingException 
+     * @throws JSONException 
      */
-    public void onSuccess(String content, int responseCode) throws UnsupportedEncodingException {
+    public void onSuccess(String content, int responseCode) throws UnsupportedEncodingException, JSONException {
     	System.out.println("Default onSuccess for responseCode "+responseCode);
     }
     public void onSuccess(JSONObject content, int responseCode) throws UnsupportedEncodingException {
@@ -139,7 +141,7 @@ public class RCSJsonHttpResponseHandler extends AsyncHttpResponseHandler {
     // Pre-processing of messages (in original calling thread, typically the UI thread)
     //
 
-    protected void handleSuccessMessage(String responseBody, int responseCode) throws UnsupportedEncodingException {
+    protected void handleSuccessMessage(String responseBody, int responseCode) throws UnsupportedEncodingException, JSONException {
         try {
             if (responseBody != null) {
                 Object jsonResponse = parseResponse(responseBody);
@@ -200,6 +202,8 @@ public class RCSJsonHttpResponseHandler extends AsyncHttpResponseHandler {
 			} catch (UnsupportedEncodingException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+			} catch (JSONException e) {
+				Log.e("SplashActivity", "Error converting JSON body for create notification channel");
 			}
                 break;
             case FAILURE_MESSAGE:

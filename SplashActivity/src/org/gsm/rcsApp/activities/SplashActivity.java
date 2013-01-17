@@ -10,6 +10,8 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.message.BasicHeader;
+import org.apache.http.protocol.HTTP;
 import org.gsm.RCSDemo.R;
 import org.gsm.rcsApp.ServiceURL;
 import org.gsm.rcsApp.misc.RCSJsonHttpResponseHandler;
@@ -27,14 +29,15 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.RequestParams;
 
 public class SplashActivity extends Activity {
 
 	public static String userId=null;
 	
 //	public static String appCredentialUsername="NOUSER";
-	public static final String appCredentialUsername="application_username";
-	public static final String appCredentialPassword="application_password";
+	public static final String appCredentialUsername="9254711da4ce54ee165923c7a17b6068";
+	public static final String appCredentialPassword="d/kX)6M8";
 	
 	static SplashActivity _instance=null;
 	
@@ -222,13 +225,22 @@ public class SplashActivity extends Activity {
 //        client.setBasicAuth(SplashActivity.appCredentialUsername, SplashActivity.appCredentialPassword, authscope);        
         String auth = android.util.Base64.encodeToString((SplashActivity.appCredentialUsername+":"+SplashActivity.appCredentialPassword).getBytes("UTF-8"), android.util.Base64.NO_WRAP);
         final String url=ServiceURL.createNotificationChannelURL(userId);
-        client.addHeader("Authorization", "Basic "+ auth);
-        String jsonData="{\"notificationChannel\": { \"channelData\": { \"maxNotifications\": 100 }, \"applicationTag\": \"GSMA RCS Demo\", "+
-        				"\"channelLifetime\": 0, \"channelType\": \"LongPolling\"}}";
+        
+//        String jsonData="{\"notificationChannel\": { \"channelData\": { \"maxNotifications\": 100, \"type\": \"LongPollingData\" }, \"applicationTag\": \"GSMA RCS Demo\", "+
+//        				"\"channelLifetime\": 20, \"channelType\": \"LongPolling\"}}";
+        String jsonData="{\"notificationChannel\": {\"applicationTag\": \"myApp\", \"channelData\": {\"maxNotifications\": \"3\", \"type\": \"LongPollingData\"}, \"channelLifetime\": \"20\", \"channelType\": \"LongPolling\", \"clientCorrelator\": \"123\"}}";
+        try {
+			JSONObject body = new JSONObject(jsonData);
+		} catch (JSONException e1) {
+			Log.e("SplashActivity", "Error converting Request Body");
+		}
+        Log.d("SplashActivity", "register for notifications: URL = "+url);
         
         try {
 			StringEntity requestData=new StringEntity(jsonData);
-	        
+			Log.d("SplashActivity", "register for notifications: sending post request...");
+			client.addHeader("Authorization", "Basic "+ auth);
+			client.addHeader("Accept", "application/json");
 	        client.post(_instance.getApplication().getApplicationContext(),
 	        		url, requestData, "application/json", new RCSJsonHttpResponseHandler() {
 	        	@Override
@@ -245,13 +257,25 @@ public class SplashActivity extends Activity {
 	        			Log.d("SplashActivity", "resourceURL = "+notificationChannelResourceURL);
 	        			Log.d("SplashActivity", "channelURL = "+notificationChannelURL);
 	        			
+	        			Log.i("SplashActivity", "Subscribing User to Address Book Notifications...");
 	        			subscribeToAddressBookNotifications(callbackURL);
+	        			Log.i("SplashActivity", "Subscribing User to Session Notifications...");
 	        			subscribeToSessionNotifications(callbackURL);
+	        			Log.i("SplashActivity", "Subscribing User to Chat Notifications...");
 	        			subscribeToChatNotifications(callbackURL);
+	        		}else{
+	        			Log.e("SplashActivity","Create Notification Channel Error: HTTP "+statusCode);
 	        		}
 	        	}
 
-
+	        	
+	        			@Override
+	        			public void onFailure(Throwable error, String content,
+	        					int responseCode) {
+	        				super.onFailure(error, content, responseCode);
+	        				Log.e("SplashActivity", "Response Code = "+responseCode);
+	        				Log.e("SplashActivity", "Error Creating Notification Channel", error);
+	        			}
 	        });
 		} catch (UnsupportedEncodingException e) { }
 
